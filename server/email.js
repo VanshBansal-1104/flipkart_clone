@@ -64,7 +64,7 @@ function createSmtpTransport(cfg) {
 
   if (useGmail) {
     return nodemailer.createTransport({
-      service: "gmail",
+      service: "Gmail",
       auth: { user: authUser, pass: SMTP_PASS },
     });
   }
