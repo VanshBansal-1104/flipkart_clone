@@ -45,7 +45,9 @@ const AuthHydrate = () => {
 const AppRoutes = () => {
   const { pathname } = useLocation();
   const hideFooter = pathname === "/login";
-
+   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [pathname]);
   return (
     <div className="min-h-screen flex flex-col">
       <div className="flex-1">
