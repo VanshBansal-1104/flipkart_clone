@@ -486,6 +486,14 @@ app.post("/api/orders", async (req, res) => {
       return res.status(400).json({ error: "Invalid order payload" });
     }
 
+    // ✅ FIX 1: Batch fetch ALL products in ONE query instead of N separate queries
+    const productIds = items.map((i) => i.productId);
+    const [prows] = await pool.query(
+      "SELECT id, price, in_stock, stock_quantity FROM products WHERE id IN (?)",
+      [productIds],
+    );
+    const productMap = new Map(prows.map((p) => [p.id, p]));
+
     let total = 0;
     const lines = [];
     for (const line of items) {
@@ -494,11 +502,7 @@ app.post("/api/orders", async (req, res) => {
       if (!pid || !qty || qty < 1) {
         return res.status(400).json({ error: "Invalid line item" });
       }
-      const [prows] = await pool.query(
-        "SELECT id, price, in_stock, stock_quantity FROM products WHERE id = ?",
-        [pid],
-      );
-      const pr = prows[0];
+      const pr = productMap.get(pid);
       if (!pr || !pr.in_stock) {
         return res.status(400).json({ error: `Product unavailable: ${pid}` });
       }
@@ -537,24 +541,25 @@ app.post("/api/orders", async (req, res) => {
       conn.release();
     }
 
-    const emailTo = notifyEmail || payload?.email || null;
+    // ✅ FIX 2: Also check address.email so guest customers get confirmations
+    const emailTo = notifyEmail || address?.email || payload?.email || null;
+
     const totalFormatted = new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: "INR",
       maximumFractionDigits: 0,
     }).format(total);
 
-    try {
-      await sendOrderConfirmationEmail(emailTo, {
-        orderId: publicId,
-        totalFormatted,
-        itemCount: items.reduce((s, i) => s + Number(i.quantity), 0),
-      });
-    } catch (err) {
-      console.error("Order confirmation email failed:", err?.message || err);
-    }
-
+    // ✅ FIX 3: Respond IMMEDIATELY — don't make user wait for SMTP
     res.status(201).json({ orderId: publicId, total });
+
+    // Email sends in background after response is already sent to client
+    sendOrderConfirmationEmail(emailTo, {
+      orderId: publicId,
+      totalFormatted,
+      itemCount: items.reduce((s, i) => s + Number(i.quantity), 0),
+    }).catch((err) => console.error("Order confirmation email failed:", err?.message || err));
+
   } catch (e) {
     console.error(e);
     const detail =
