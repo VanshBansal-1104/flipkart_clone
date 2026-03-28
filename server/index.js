@@ -20,11 +20,13 @@ const PORT = Number(process.env.PORT) || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || "dev-only-change-me";
 const isProd = process.env.NODE_ENV === "production";
 const DIST_DIR = path.join(REPO_ROOT, "dist");
+
 /** Supports Railway/Render-style DB_* names as well as MYSQL_*. */
 const MYSQL_HOST = process.env.MYSQL_HOST || process.env.DB_HOST || "localhost";
 const MYSQL_USER = process.env.MYSQL_USER || process.env.DB_USER || "root";
 const MYSQL_PASSWORD = process.env.MYSQL_PASSWORD ?? process.env.DB_PASSWORD ?? "";
 const MYSQL_DATABASE = process.env.MYSQL_DATABASE || process.env.DB_NAME || "flipkart_clone";
+const MYSQL_PORT = Number(process.env.MYSQL_PORT) || 3306;
 
 if (isProd && (MYSQL_HOST === "localhost" || MYSQL_HOST === "127.0.0.1")) {
   console.warn(
@@ -138,22 +140,20 @@ async function initDb() {
     host: MYSQL_HOST,
     user: MYSQL_USER,
     password: MYSQL_PASSWORD,
-    port: MYSQL_PORT, 
+    port: MYSQL_PORT,
   });
   await conn.query(`CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\``);
   await conn.end();
 
-  const MYSQL_PORT = process.env.MYSQL_PORT || 3306;
-
-pool = mysql.createPool({
-  host: MYSQL_HOST,
-  user: MYSQL_USER,
-  password: MYSQL_PASSWORD,
-  database: MYSQL_DATABASE,
-  port: MYSQL_PORT,   // 🔥 CRITICAL FIX
-  waitForConnections: true,
-  connectionLimit: 10,
-});
+  pool = mysql.createPool({
+    host: MYSQL_HOST,
+    user: MYSQL_USER,
+    password: MYSQL_PASSWORD,
+    database: MYSQL_DATABASE,
+    port: MYSQL_PORT,
+    waitForConnections: true,
+    connectionLimit: 10,
+  });
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
