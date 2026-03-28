@@ -138,18 +138,22 @@ async function initDb() {
     host: MYSQL_HOST,
     user: MYSQL_USER,
     password: MYSQL_PASSWORD,
+    port: MYSQL_PORT, 
   });
   await conn.query(`CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\``);
   await conn.end();
 
-  pool = mysql.createPool({
-    host: MYSQL_HOST,
-    user: MYSQL_USER,
-    password: MYSQL_PASSWORD,
-    database: MYSQL_DATABASE,
-    waitForConnections: true,
-    connectionLimit: 10,
-  });
+  const MYSQL_PORT = process.env.MYSQL_PORT || 3306;
+
+pool = mysql.createPool({
+  host: MYSQL_HOST,
+  user: MYSQL_USER,
+  password: MYSQL_PASSWORD,
+  database: MYSQL_DATABASE,
+  port: MYSQL_PORT,   // 🔥 CRITICAL FIX
+  waitForConnections: true,
+  connectionLimit: 10,
+});
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
