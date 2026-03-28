@@ -59,7 +59,7 @@ A full-stack e-commerce demo inspired by Flipkart: React storefront, Express RES
 ## Repository layout
 
 ```
-flipkart_clone-main/
+flipkart_clone/
 ├── public/                 # Static assets (robots.txt, placeholders)
 ├── server/
 │   ├── index.js            # Express app, DB bootstrap, REST routes
