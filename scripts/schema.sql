@@ -1,0 +1,61 @@
+-- Flipkart Clone — MySQL schema (reference; API also creates tables on startup)
+
+CREATE DATABASE IF NOT EXISTS flipkart_clone
+  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+USE flipkart_clone;
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  name VARCHAR(255) DEFAULT NULL,
+  saved_address JSON NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS categories (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(128) NOT NULL UNIQUE,
+  slug VARCHAR(128) NOT NULL UNIQUE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS products (
+  id VARCHAR(36) NOT NULL PRIMARY KEY,
+  category_id INT UNSIGNED NOT NULL,
+  name VARCHAR(512) NOT NULL,
+  description TEXT,
+  price INT NOT NULL,
+  original_price INT NOT NULL,
+  discount INT NOT NULL DEFAULT 0,
+  rating DECIMAL(3,2) NOT NULL,
+  rating_count INT NOT NULL DEFAULT 0,
+  brand VARCHAR(128) NOT NULL,
+  images JSON NOT NULL,
+  specifications JSON NOT NULL,
+  highlights JSON NOT NULL,
+  in_stock TINYINT(1) NOT NULL DEFAULT 1,
+  stock_quantity INT NOT NULL DEFAULT 99,
+  FOREIGN KEY (category_id) REFERENCES categories(id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS orders (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  public_id VARCHAR(32) NOT NULL UNIQUE,
+  user_id INT UNSIGNED NULL,
+  total_amount INT NOT NULL,
+  shipping_address JSON NOT NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'PLACED',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS order_items (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  order_id INT UNSIGNED NOT NULL,
+  product_id VARCHAR(36) NOT NULL,
+  quantity INT NOT NULL,
+  unit_price INT NOT NULL,
+  FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+  FOREIGN KEY (product_id) REFERENCES products(id)
+) ENGINE=InnoDB;
